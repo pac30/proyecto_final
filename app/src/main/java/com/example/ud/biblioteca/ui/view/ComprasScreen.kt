@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ud.biblioteca.model.Libro
+import com.example.ud.biblioteca.ui.util.LocalLanguage
+import com.example.ud.biblioteca.ui.util.Strings
 import com.example.ud.biblioteca.ui.viewmodel.BibliotecaViewModel
 import kotlinx.coroutines.launch
 
@@ -23,6 +25,8 @@ fun ComprasScreen(
     navController: NavController,
     viewModel: BibliotecaViewModel = viewModel()
 ) {
+    val lang = LocalLanguage.current.value
+
     val libros by viewModel.libros.collectAsState()
     var cantidad by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
@@ -38,10 +42,10 @@ fun ComprasScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Registrar Compra") },
+                title = { Text(Strings.get("buy", lang)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("home") }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -53,7 +57,7 @@ fun ComprasScreen(
                 .padding(24.dp)
                 .verticalScroll(scrollState)
         ) {
-            Text("Seleccione un libro:")
+            Text(Strings.get("select_book", lang))
 
             libros.forEach { libro ->
                 Row(modifier = Modifier.fillMaxWidth()) {
@@ -67,11 +71,11 @@ fun ComprasScreen(
 
             libroSeleccionado?.let { libro ->
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("Detalles del libro:")
-                Text("Autor: ${libro.autor}")
-                Text("Categoría: ${libro.categoria}")
-                Text("Disponible: ${if (libro.disponible) "Sí" else "No"}")
-                Text("Cantidad en inventario: ${libro.cantidad}")
+                Text(Strings.get("book_details", lang))
+                Text("${Strings.get("author", lang)}: ${libro.autor}")
+                Text("${Strings.get("category", lang)}: ${libro.categoria}")
+                Text("${Strings.get("available", lang)}: ${if (libro.disponible) Strings.get("yes", lang) else Strings.get("no", lang)}")
+                Text("${Strings.get("quantity", lang)}: ${libro.cantidad}")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -79,7 +83,7 @@ fun ComprasScreen(
             OutlinedTextField(
                 value = cantidad,
                 onValueChange = { cantidad = it },
-                label = { Text("Cantidad a comprar") },
+                label = { Text(Strings.get("purchase_quantity", lang)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -88,7 +92,7 @@ fun ComprasScreen(
             OutlinedTextField(
                 value = precio,
                 onValueChange = { precio = it },
-                label = { Text("Precio de compra por unidad") },
+                label = { Text(Strings.get("purchase_price", lang)) },
                 modifier = Modifier.fillMaxWidth()
             )
 
@@ -103,18 +107,18 @@ fun ComprasScreen(
                     ) {
                         coroutineScope.launch {
                             viewModel.comprarLibro(libroSeleccionado!!, cant, pr)
-                            Toast.makeText(context, "Compra registrada", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, Strings.get("purchase_registered", lang), Toast.LENGTH_SHORT).show()
                             cantidad = ""
                             precio = ""
                             libroSeleccionado = null
                         }
                     } else {
-                        Toast.makeText(context, "Datos inválidos", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, Strings.get("invalid_data", lang), Toast.LENGTH_SHORT).show()
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Registrar Compra")
+                Text(Strings.get("buy", lang))
             }
         }
     }

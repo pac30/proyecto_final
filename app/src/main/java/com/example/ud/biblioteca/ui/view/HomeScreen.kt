@@ -1,37 +1,53 @@
 package com.example.ud.biblioteca.ui.view
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import coil.compose.rememberAsyncImagePainter
+import com.example.ud.biblioteca.ui.util.LocalLanguage
 import com.example.ud.biblioteca.ui.util.Strings
-import com.example.ud.biblioteca.ui.viewmodel.LanguageViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
-    navController: NavHostController,
-    languageViewModel: LanguageViewModel = viewModel()
-) {
-    val lang by languageViewModel.currentLanguage
+fun HomeScreen(navController: NavHostController) {
+
+    val langState = LocalLanguage.current
+    val lang = langState.value
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text(Strings.get("home_title", lang)) }) }
+        topBar = {
+            TopAppBar(title = { Text(Strings.get("home_title", lang)) })
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
                 .padding(24.dp),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
             Text(
                 text = Strings.get("welcome", lang),
                 style = MaterialTheme.typography.headlineSmall
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 🖼 Imagen decorativa
+            Image(
+                painter = rememberAsyncImagePainter("https://www.oficinasmontiel.com/blog/wp-content/uploads/2024/05/96-2048x1365.jpg"),
+                contentDescription = "Imagen de biblioteca",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .clip(RoundedCornerShape(12.dp))
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -73,13 +89,15 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             Button(
-                onClick = { languageViewModel.toggleLanguage() },
+                onClick = {
+                    langState.value = if (lang == "es") "en" else "es"
+                },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(Strings.get("change_lang", lang))
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Button(
                 onClick = {
@@ -93,7 +111,10 @@ fun HomeScreen(
                     containerColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text(Strings.get("logout", lang), color = MaterialTheme.colorScheme.onError)
+                Text(
+                    Strings.get("logout", lang),
+                    color = MaterialTheme.colorScheme.onError
+                )
             }
         }
     }
