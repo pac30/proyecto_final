@@ -11,8 +11,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.ud.biblioteca.ui.util.LocalLanguage
+import com.example.ud.biblioteca.ui.util.Strings
 import com.example.ud.biblioteca.ui.viewmodel.BibliotecaViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -20,6 +21,7 @@ fun InventarioScreen(
     navController: NavController,
     viewModel: BibliotecaViewModel = viewModel()
 ) {
+    val lang = LocalLanguage.current.value
     val libros by viewModel.libros.collectAsState()
     val scrollState = rememberScrollState()
 
@@ -30,10 +32,10 @@ fun InventarioScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Inventario") },
+                title = { Text(Strings.get("inventory", lang)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("home") }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = Strings.get("back", lang))
                     }
                 }
             )
@@ -52,11 +54,11 @@ fun InventarioScreen(
                         .padding(vertical = 8.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("Título: ${libro.titulo}")
-                        Text("Autor: ${libro.autor}")
-                        Text("Categoría: ${libro.categoria}")
-                        Text("Cantidad: ${libro.cantidad}")
-                        Text("Disponible: ${if (libro.disponible) "Sí" else "No"}")
+                        Text("${Strings.get("title", lang)}: ${libro.titulo}")
+                        Text("${Strings.get("author", lang)}: ${libro.autor}")
+                        Text("${Strings.get("category", lang)}: ${libro.categoria}")
+                        Text("${Strings.get("quantity", lang)}: ${libro.cantidad}")
+                        Text("${Strings.get("available", lang)}: ${if (libro.disponible) Strings.get("yes", lang) else Strings.get("no", lang)}")
                     }
                 }
             }

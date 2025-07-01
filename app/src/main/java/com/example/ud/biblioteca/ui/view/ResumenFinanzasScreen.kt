@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.ud.biblioteca.ui.util.LocalLanguage
+import com.example.ud.biblioteca.ui.util.Strings
 import com.example.ud.biblioteca.ui.viewmodel.BibliotecaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -17,6 +19,7 @@ fun ResumenFinanzasScreen(
     navController: NavController,
     viewModel: BibliotecaViewModel = viewModel()
 ) {
+    val lang = LocalLanguage.current.value
     val totalComprado by viewModel.totalComprado.collectAsState()
     val totalVendido by viewModel.totalVendido.collectAsState()
 
@@ -27,10 +30,10 @@ fun ResumenFinanzasScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Resumen Financiero") },
+                title = { Text(Strings.get("finance", lang)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.navigate("home") }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.Default.ArrowBack, contentDescription = Strings.get("back", lang))
                     }
                 }
             )
@@ -44,7 +47,7 @@ fun ResumenFinanzasScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Total invertido en compras:",
+                text = Strings.get("total_spent", lang),
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
@@ -53,7 +56,7 @@ fun ResumenFinanzasScreen(
             )
 
             Text(
-                text = "Total ganado por ventas:",
+                text = Strings.get("total_earned", lang),
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
@@ -62,7 +65,7 @@ fun ResumenFinanzasScreen(
             )
 
             Text(
-                text = "Balance actual:",
+                text = Strings.get("balance", lang),
                 style = MaterialTheme.typography.titleMedium
             )
             Text(
