@@ -29,11 +29,19 @@ fun ComprasScreen(
     val libros by viewModel.libros.collectAsState()
     val message by viewModel.uiMessage.collectAsState()
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    val coroutineScope = rememberCoroutineScope()
 
     var cantidad by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
     var libroSeleccionado by remember { mutableStateOf<Libro?>(null) }
 
+    // Cargar libros al iniciar
+    LaunchedEffect(Unit) {
+        viewModel.cargarLibros()
+    }
+
+    // Mostrar mensaje al usuario
     LaunchedEffect(message) {
         message?.let {
             Toast.makeText(context, Strings.get(it, lang), Toast.LENGTH_SHORT).show()
@@ -46,13 +54,73 @@ fun ComprasScreen(
         }
     }
 
-    // (Mantén el resto de tu UI igual, excepto el botón):
-    Button(
-        onClick = {
-            viewModel.comprar(libroSeleccionado, cantidad, precio)
-        },
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Text(Strings.get("buy", lang))
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(Strings.get("buy_books", lang)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigate("home") }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = Strings.get("back", lang))
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .padding(24.dp)
+                .verticalScroll(scrollState)
+        ) {
+            Text(Strings.get("select_book", lang))
+
+            libros.forEach { libro ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    RadioButton(
+                        selected = libro == libroSeleccionado,
+                        onClick = { libroSeleccionado = libro }
+                    )
+                    Text("${libro.titulo} (${libro.cantidad})")
+                }
+            }
+
+            libroSeleccionado?.let { libro ->
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(Strings.get("book_details", lang))
+                Text("${Strings.get("author", lang)}: ${libro.autor}")
+                Text("${Strings.get("category", lang)}: ${libro.categoria}")
+                Text("${Strings.get("available", lang)}: ${if (libro.disponible) Strings.get("yes", lang) else Strings.get("no", lang)}")
+                Text("${Strings.get("quantity", lang)}: ${libro.cantidad}")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = cantidad,
+                onValueChange = { cantidad = it },
+                label = { Text(Strings.get("purchase_quantity", lang)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = precio,
+                onValueChange = { precio = it },
+                label = { Text(Strings.get("purchase_price", lang)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    viewModel.comprar(libroSeleccionado, cantidad, precio)
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(Strings.get("buy", lang))
+            }
+        }
     }
 }
