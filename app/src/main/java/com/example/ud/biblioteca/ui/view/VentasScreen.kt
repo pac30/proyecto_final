@@ -17,7 +17,6 @@ import com.example.ud.biblioteca.model.Libro
 import com.example.ud.biblioteca.ui.util.LocalLanguage
 import com.example.ud.biblioteca.ui.util.Strings
 import com.example.ud.biblioteca.ui.viewmodel.BibliotecaViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,17 +25,30 @@ fun VentasScreen(
     viewModel: BibliotecaViewModel = viewModel()
 ) {
     val lang = LocalLanguage.current.value
-
     val libros by viewModel.libros.collectAsState()
+    val message by viewModel.uiMessage.collectAsState()
+
     var cantidad by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
     var libroSeleccionado by remember { mutableStateOf<Libro?>(null) }
+
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     LaunchedEffect(Unit) {
         viewModel.cargarLibros()
+    }
+
+    LaunchedEffect(message) {
+        message?.let {
+            Toast.makeText(context, Strings.get(it, lang), Toast.LENGTH_SHORT).show()
+            if (it == "sale_registered") {
+                cantidad = ""
+                precio = ""
+                libroSeleccionado = null
+            }
+            viewModel.clearUiMessage()
+        }
     }
 
     Scaffold(
@@ -100,22 +112,7 @@ fun VentasScreen(
 
             Button(
                 onClick = {
-                    val cant = cantidad.toIntOrNull()
-                    val pr = precio.toDoubleOrNull()
-                    if (libroSeleccionado != null && cant != null && cant > 0 &&
-                        pr != null && pr > 0.0 &&
-                        cant <= libroSeleccionado!!.cantidad
-                    ) {
-                        coroutineScope.launch {
-                            viewModel.venderLibro(libroSeleccionado!!, cant, pr)
-                            Toast.makeText(context, Strings.get("sale_registered", lang), Toast.LENGTH_SHORT).show()
-                            cantidad = ""
-                            precio = ""
-                            libroSeleccionado = null
-                        }
-                    } else {
-                        Toast.makeText(context, Strings.get("invalid_data", lang), Toast.LENGTH_SHORT).show()
-                    }
+                    viewModel.vender(libroSeleccionado, cantidad, precio)
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
@@ -124,4 +121,3 @@ fun VentasScreen(
         }
     }
 }
-
