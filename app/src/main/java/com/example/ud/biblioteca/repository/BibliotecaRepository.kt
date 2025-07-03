@@ -5,14 +5,15 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
-class BibliotecaRepository {
+open class BibliotecaRepository {
+
     private val db = FirebaseDatabase.getInstance()
     private val librosRef = db.getReference("libros")
     private val comprasRef = db.getReference("compras")
     private val ventasRef = db.getReference("ventas")
     private val finanzasRef = db.getReference("finanzas")
 
-    suspend fun obtenerLibros(): List<Libro> {
+    open suspend fun obtenerLibros(): List<Libro> {
         return try {
             val snapshot = librosRef.get().await()
             snapshot.children.mapNotNull {
@@ -24,7 +25,7 @@ class BibliotecaRepository {
         }
     }
 
-    suspend fun registrarCompra(libro: Libro, cantidadComprada: Int, precio: Double) {
+    open suspend fun registrarCompra(libro: Libro, cantidadComprada: Int, precio: Double) {
         val nuevaCantidad = libro.cantidad + cantidadComprada
         librosRef.child(libro.id).child("cantidad").setValue(nuevaCantidad).await()
 
@@ -34,6 +35,8 @@ class BibliotecaRepository {
         val compraData = mapOf(
             "libroId" to libro.id,
             "titulo" to libro.titulo,
+            "autor" to libro.autor,
+            "categoria" to libro.categoria,
             "cantidad" to cantidadComprada,
             "precio" to precio,
             "usuarioId" to uid,
@@ -44,7 +47,7 @@ class BibliotecaRepository {
         actualizarTotalComprado(precio * cantidadComprada)
     }
 
-    suspend fun registrarVenta(libro: Libro, cantidadVendida: Int, precio: Double) {
+    open suspend fun registrarVenta(libro: Libro, cantidadVendida: Int, precio: Double) {
         val nuevaCantidad = (libro.cantidad - cantidadVendida).coerceAtLeast(0)
         librosRef.child(libro.id).child("cantidad").setValue(nuevaCantidad).await()
 
@@ -74,5 +77,12 @@ class BibliotecaRepository {
         val snapshot = finanzasRef.child("totalVendido").get().await()
         val actual = snapshot.getValue(Double::class.java) ?: 0.0
         finanzasRef.child("totalVendido").setValue(actual + monto).await()
+    }
+
+    open suspend fun agregarNuevoLibro(libro: Libro, cantidad: Int, precio: Double) {
+        val nuevoId = librosRef.push().key ?: return
+        val libroConId = libro.copy(id = nuevoId, cantidad = 0)
+        librosRef.child(nuevoId).setValue(libroConId).await()
+        registrarCompra(libroConId, cantidad, precio)
     }
 }

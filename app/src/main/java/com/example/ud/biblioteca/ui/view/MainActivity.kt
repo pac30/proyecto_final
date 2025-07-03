@@ -16,11 +16,10 @@ import com.example.ud.biblioteca.ui.viewmodel.LoginViewModel
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
-            // Estado global del idioma
             val language = remember { mutableStateOf("es") }
 
-            // Proveedor global del idioma para toda la app
             CompositionLocalProvider(LocalLanguage provides language) {
                 BibliotecaTheme {
                     val navController = rememberNavController()
@@ -38,13 +37,13 @@ class MainActivity : ComponentActivity() {
                             HomeScreen(navController)
                         }
                         composable("inventario") {
-                            InventarioScreen(navController = navController)
+                            InventarioScreen(navController)
                         }
                         composable("compras") {
-                            ComprasScreen(navController = navController)
+                            ComprasScreen(navController)
                         }
                         composable("ventas") {
-                            VentasScreen(navController = navController)
+                            VentasScreen(navController)
                         }
                         composable("finanzas") {
                             ResumenFinanzasScreen(navController)

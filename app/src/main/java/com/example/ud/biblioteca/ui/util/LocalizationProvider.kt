@@ -18,6 +18,7 @@ object Strings {
             "logout" to "Cerrar sesión",
             "change_lang" to "Cambiar idioma",
             "back" to "Volver",
+            "buy_books" to "Comprar libros",
 
             // Generales
             "quantity" to "Cantidad",
@@ -57,7 +58,6 @@ object Strings {
             "sale_quantity" to "Cantidad a vender",
             "sale_price" to "Precio de venta por unidad",
             "sale_registered" to "Venta registrada"
-
         ),
         "en" to mapOf(
             // Main screen
@@ -70,6 +70,7 @@ object Strings {
             "logout" to "Sign out",
             "change_lang" to "Change Language",
             "back" to "Back",
+            "buy_books" to "Buy Books",
 
             // General
             "quantity" to "Quantity",
