@@ -5,7 +5,6 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.tasks.await
 
-// ¡IMPORTANTE! 👉 Necesitamos que la clase y los métodos sean `open` para que puedan ser mockeados
 open class BibliotecaRepository {
 
     private val db = FirebaseDatabase.getInstance()
@@ -36,6 +35,8 @@ open class BibliotecaRepository {
         val compraData = mapOf(
             "libroId" to libro.id,
             "titulo" to libro.titulo,
+            "autor" to libro.autor,
+            "categoria" to libro.categoria,
             "cantidad" to cantidadComprada,
             "precio" to precio,
             "usuarioId" to uid,
@@ -66,7 +67,6 @@ open class BibliotecaRepository {
         actualizarTotalVendido(precio * cantidadVendida)
     }
 
-    // Estos no hace falta marcarlos como `open` porque no los usas en tests directamente
     private suspend fun actualizarTotalComprado(monto: Double) {
         val snapshot = finanzasRef.child("totalComprado").get().await()
         val actual = snapshot.getValue(Double::class.java) ?: 0.0
@@ -77,5 +77,12 @@ open class BibliotecaRepository {
         val snapshot = finanzasRef.child("totalVendido").get().await()
         val actual = snapshot.getValue(Double::class.java) ?: 0.0
         finanzasRef.child("totalVendido").setValue(actual + monto).await()
+    }
+
+    open suspend fun agregarNuevoLibro(libro: Libro, cantidad: Int, precio: Double) {
+        val nuevoId = librosRef.push().key ?: return
+        val libroConId = libro.copy(id = nuevoId, cantidad = 0)
+        librosRef.child(nuevoId).setValue(libroConId).await()
+        registrarCompra(libroConId, cantidad, precio)
     }
 }

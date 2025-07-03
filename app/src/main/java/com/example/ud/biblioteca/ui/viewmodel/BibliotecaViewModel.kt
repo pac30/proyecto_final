@@ -1,9 +1,11 @@
 package com.example.ud.biblioteca.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ud.biblioteca.model.Libro
 import com.example.ud.biblioteca.repository.BibliotecaRepository
+import com.example.ud.biblioteca.ui.util.NotificationUtils
 import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +13,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class BibliotecaViewModel(
-    private val repo: BibliotecaRepository = BibliotecaRepository() // ✅ Permite inyección en tests
+    private val repo: BibliotecaRepository = BibliotecaRepository()
 ) : ViewModel() {
 
     private val _libros = MutableStateFlow<List<Libro>>(emptyList())
@@ -46,7 +48,7 @@ class BibliotecaViewModel(
         }
     }
 
-    fun comprar(libro: Libro?, cantidadStr: String, precioStr: String) {
+    fun comprar(libro: Libro?, cantidadStr: String, precioStr: String, context: Context? = null) {
         viewModelScope.launch {
             val cant = cantidadStr.toIntOrNull()
             val precio = precioStr.toDoubleOrNull()
@@ -59,6 +61,10 @@ class BibliotecaViewModel(
             repo.registrarCompra(libro, cant, precio)
             cargarLibros()
             _uiMessage.value = "purchase_registered"
+
+            context?.let {
+                NotificationUtils.showCompraNotification(it, libro.titulo)
+            }
         }
     }
 
@@ -77,4 +83,27 @@ class BibliotecaViewModel(
             _uiMessage.value = "sale_registered"
         }
     }
+    fun comprarNuevoLibro(titulo: String, autor: String, categoria: String, cantidadStr: String, precioStr: String) {
+        viewModelScope.launch {
+            val cant = cantidadStr.toIntOrNull()
+            val precio = precioStr.toDoubleOrNull()
+
+            if (titulo.isBlank() || autor.isBlank() || categoria.isBlank() || cant == null || precio == null || cant <= 0 || precio <= 0.0) {
+                _uiMessage.value = "invalid_data"
+                return@launch
+            }
+
+            val nuevoLibro = Libro(
+                titulo = titulo,
+                autor = autor,
+                categoria = categoria,
+                cantidad = 0
+            )
+
+            repo.agregarNuevoLibro(nuevoLibro, cant, precio)
+            cargarLibros()
+            _uiMessage.value = "purchase_registered"
+        }
+    }
+
 }

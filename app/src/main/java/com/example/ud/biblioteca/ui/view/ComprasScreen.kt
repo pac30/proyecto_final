@@ -1,6 +1,10 @@
 package com.example.ud.biblioteca.ui.view
 
+import android.Manifest
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,9 +19,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.example.ud.biblioteca.model.Libro
 import com.example.ud.biblioteca.ui.util.LocalLanguage
+import com.example.ud.biblioteca.ui.util.NotificationUtils
 import com.example.ud.biblioteca.ui.util.Strings
 import com.example.ud.biblioteca.ui.viewmodel.BibliotecaViewModel
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,26 +34,53 @@ fun ComprasScreen(
     val message by viewModel.uiMessage.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
-    val coroutineScope = rememberCoroutineScope()
 
     var cantidad by remember { mutableStateOf("") }
     var precio by remember { mutableStateOf("") }
     var libroSeleccionado by remember { mutableStateOf<Libro?>(null) }
+    var usarNuevoLibro by remember { mutableStateOf(false) }
+    var nuevoTitulo by remember { mutableStateOf("") }
+    var nuevoAutor by remember { mutableStateOf("") }
+    var nuevaCategoria by remember { mutableStateOf("") }
 
-    // Cargar libros al iniciar
+    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
+
     LaunchedEffect(Unit) {
         viewModel.cargarLibros()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
-    // Mostrar mensaje al usuario
     LaunchedEffect(message) {
         message?.let {
-            Toast.makeText(context, Strings.get(it, lang), Toast.LENGTH_SHORT).show()
             if (it == "purchase_registered") {
+                val titulo = if (usarNuevoLibro) nuevoTitulo else libroSeleccionado?.titulo ?: ""
+                val autor = if (usarNuevoLibro) nuevoAutor else libroSeleccionado?.autor ?: ""
+                val categoria = if (usarNuevoLibro) nuevaCategoria else libroSeleccionado?.categoria ?: ""
+                val cantidadInt = cantidad.toIntOrNull() ?: 0
+                val precioDouble = precio.toDoubleOrNull() ?: 0.0
+
+                val detalle = """
+                    Título: $titulo
+                    Autor: $autor
+                    Categoría: $categoria
+                    Cantidad: $cantidadInt
+                    Precio: $${"%.2f".format(precioDouble)}
+                """.trimIndent()
+
+                NotificationUtils.showCompraNotification(context, detalle)
+
                 cantidad = ""
                 precio = ""
+                nuevoTitulo = ""
+                nuevoAutor = ""
+                nuevaCategoria = ""
                 libroSeleccionado = null
+                usarNuevoLibro = false
             }
+
+            Toast.makeText(context, Strings.get(it, lang), Toast.LENGTH_SHORT).show()
             viewModel.clearUiMessage()
         }
     }
@@ -77,20 +108,46 @@ fun ComprasScreen(
             libros.forEach { libro ->
                 Row(modifier = Modifier.fillMaxWidth()) {
                     RadioButton(
-                        selected = libro == libroSeleccionado,
-                        onClick = { libroSeleccionado = libro }
+                        selected = libro == libroSeleccionado && !usarNuevoLibro,
+                        onClick = {
+                            libroSeleccionado = libro
+                            usarNuevoLibro = false
+                        }
                     )
                     Text("${libro.titulo} (${libro.cantidad})")
                 }
             }
 
-            libroSeleccionado?.let { libro ->
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(Strings.get("book_details", lang))
-                Text("${Strings.get("author", lang)}: ${libro.autor}")
-                Text("${Strings.get("category", lang)}: ${libro.categoria}")
-                Text("${Strings.get("available", lang)}: ${if (libro.disponible) Strings.get("yes", lang) else Strings.get("no", lang)}")
-                Text("${Strings.get("quantity", lang)}: ${libro.cantidad}")
+            Row(modifier = Modifier.fillMaxWidth()) {
+                RadioButton(
+                    selected = usarNuevoLibro,
+                    onClick = {
+                        libroSeleccionado = null
+                        usarNuevoLibro = true
+                    }
+                )
+                Text("Nuevo libro")
+            }
+
+            if (usarNuevoLibro) {
+                OutlinedTextField(
+                    value = nuevoTitulo,
+                    onValueChange = { nuevoTitulo = it },
+                    label = { Text("Título del nuevo libro") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = nuevoAutor,
+                    onValueChange = { nuevoAutor = it },
+                    label = { Text("Autor del nuevo libro") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = nuevaCategoria,
+                    onValueChange = { nuevaCategoria = it },
+                    label = { Text("Categoría del nuevo libro") },
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -115,7 +172,17 @@ fun ComprasScreen(
 
             Button(
                 onClick = {
-                    viewModel.comprar(libroSeleccionado, cantidad, precio)
+                    if (usarNuevoLibro && nuevoTitulo.isNotBlank()) {
+                        viewModel.comprarNuevoLibro(
+                            titulo = nuevoTitulo.trim(),
+                            autor = nuevoAutor.trim(),
+                            categoria = nuevaCategoria.trim(),
+                            cantidadStr = cantidad,
+                            precioStr = precio
+                        )
+                    } else {
+                        viewModel.comprar(libroSeleccionado, cantidad, precio)
+                    }
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
